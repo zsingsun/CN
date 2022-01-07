@@ -10,18 +10,19 @@ import (
 	"syscall"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+
 )
 
 
 type helloHandler struct{}
 
 func (*helloHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
+    // 将request中带的header写入response header
 	for k, v := range r.Header {
-		//fmt.Println(k, strings.Join(v, ""))
 		w.Header().Add(k, strings.Join(v, ""))
 	}
-
+    // 读取当前系统的环境变量中的VERSION配置，并写入response header
 	w.Header().Add("VERSION", os.Getenv("VERSION"))
 
 	fmt.Fprintf(w, "Hello!")
@@ -30,10 +31,11 @@ func (*helloHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 type healthzHandler struct{}
 
 func (*healthzHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// 当访问/healthz时，应返回200
 	fmt.Fprintf(w, "200")
 }
 
-// Request.RemoteAddress 包含了端口，我们需要把它删掉，比如: "[::1]:58292" => "[::1]"
+// 处理Request.RemoteAddress，只保留ip地址，比如: "[::1]:58292" => "[::1]"
 func ipAddrWithoutPort(s string) string {
 	idx := strings.LastIndex(s, ":")
 	if idx == -1 {
@@ -42,12 +44,42 @@ func ipAddrWithoutPort(s string) string {
 	return s[:idx]
 }
 
-//
-func Logger(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Access from", ipAddrWithoutPort(r.RemoteAddr))
+type (
+	responseData struct {
+		status int
+	}
 
-		h.ServeHTTP(w, r)
+	loggingResponseWriter struct {
+		http.ResponseWriter
+		responseData        *responseData
+	}
+)
+
+// 获取response中的statuscode
+func (r *loggingResponseWriter) WriteHeader(statusCode int) {
+	r.ResponseWriter.WriteHeader(statusCode)
+	r.responseData.status = statusCode
+}
+
+func WithHTTPLogging(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		responseData := &responseData{
+			status: 200,
+		}
+		lw := loggingResponseWriter{
+			ResponseWriter: w,
+			responseData:   responseData,
+		}
+		h.ServeHTTP(&lw, r)
+
+		logrus.WithFields(logrus.Fields{
+			"clientip":   ipAddrWithoutPort(r.RemoteAddr),
+			"uri":      r.RequestURI,
+			"method":   r.Method,
+			"status":   responseData.status,
+		}).Info()
+
+
 	})
 }
 
@@ -57,13 +89,13 @@ func main() {
 	mux := http.NewServeMux()
 
 	var handler http.Handler = mux
-	handler = Logger(handler)
+	handler = WithHTTPLogging(handler)
 
 	mux.Handle("/hello", &helloHandler{})
 	mux.Handle("/healthz", &healthzHandler{})
 
 	server := &http.Server{
-		Addr:    ":8081",
+		Addr:    ":8000",
 		Handler: handler,
 	}
 
@@ -82,7 +114,7 @@ func main() {
 	err := server.ListenAndServe()
 	if err != nil {
 		if err == http.ErrServerClosed {
-			log.Print("Server closed under request")
+			log.Print("Server closed")
 		} else {
 			log.Fatal("Server closed unexpected")
 		}
