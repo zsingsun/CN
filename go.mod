@@ -1,3 +1,3 @@
-module CN
+module httpserver
 
 go 1.17
