@@ -44,6 +44,18 @@ func ipAddrWithoutPort(s string) string {
 	return s[:idx]
 }
 
+// 获取客户端真实IP
+func getClientIP(r *http.Request) string {
+	IPAddr := r.Header.Get("X-Real-Ip")
+	if IPAddr =="" {
+		IPAddr = r.Header.Get("X-Forwarded-For")
+	}
+	if IPAddr =="" {
+		IPAddr = r.RemoteAddr
+	}
+	return ipAddrWithoutPort(IPAddr)
+}
+
 type (
 	responseData struct {
 		status int
@@ -64,7 +76,7 @@ func (r *loggingResponseWriter) WriteHeader(statusCode int) {
 func WithHTTPLogging(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		responseData := &responseData{
-			status: 200,
+			status: http.StatusOK,
 		}
 		lw := loggingResponseWriter{
 			ResponseWriter: w,
@@ -73,7 +85,7 @@ func WithHTTPLogging(h http.Handler) http.Handler {
 		h.ServeHTTP(&lw, r)
 
 		logrus.WithFields(logrus.Fields{
-			"clientip":   ipAddrWithoutPort(r.RemoteAddr),
+			"clientip":   getClientIP(r),
 			"uri":      r.RequestURI,
 			"method":   r.Method,
 			"status":   responseData.status,
@@ -99,24 +111,25 @@ func main() {
 		Handler: handler,
 	}
 
-	// 创建系统信号接收器
+	// 创建系统信号接收器，捕捉并处理操作系统对进程产生的信号
 	done := make(chan os.Signal)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-done
 
 		if err := server.Shutdown(context.Background()); err != nil {
-			log.Fatal("Shutdown server:", err)
+			log.Fatal("Shutdown Server:", err)
 		}
 	}()
 
-	log.Println("Starting HTTP server...")
+	log.Println("Starting HTTP Server...")
 	err := server.ListenAndServe()
 	if err != nil {
 		if err == http.ErrServerClosed {
-			log.Print("Server closed")
+			log.Println("HTTP Server shutted down")
 		} else {
-			log.Fatal("Server closed unexpected")
+			log.Fatal("HTTP Server shutted unexpected")
 		}
 	}
+
 }
