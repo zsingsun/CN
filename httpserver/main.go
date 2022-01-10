@@ -111,24 +111,26 @@ func main() {
 		Handler: handler,
 	}
 
-	// 创建系统信号接收器，捕捉并处理操作系统对进程产生的信号
+	// 创建系统信号接收器，捕捉并处理操作系统对进程产生的信号，以优雅地关闭服务器进程
 	done := make(chan os.Signal)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-done
 
 		if err := server.Shutdown(context.Background()); err != nil {
-			log.Fatal("Shutdown Server:", err)
+			log.Fatal("HTTP Server Shutdown: ", err)
 		}
+
 	}()
 
-	log.Println("Starting HTTP Server...")
+	log.Println("HTTP Server Starting ...")
 	err := server.ListenAndServe()
+
 	if err != nil {
 		if err == http.ErrServerClosed {
-			log.Println("HTTP Server shutted down")
+			log.Println("HTTP Server Shutted Down")
 		} else {
-			log.Fatal("HTTP Server shutted unexpected")
+			log.Fatal("HTTP Server Shutted Unexpected")
 		}
 	}
 
