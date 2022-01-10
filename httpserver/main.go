@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 
@@ -110,7 +111,7 @@ func main() {
 		Addr:    ":8000",
 		Handler: handler,
 	}
-
+/*
 	// 创建系统信号接收器，捕捉并处理操作系统对进程产生的信号，以优雅地关闭服务器进程
 	done := make(chan os.Signal)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
@@ -120,18 +121,41 @@ func main() {
 		if err := server.Shutdown(context.Background()); err != nil {
 			log.Fatal("HTTP Server Shutdown: ", err)
 		}
-
 	}()
 
 	log.Println("HTTP Server Starting ...")
-	err := server.ListenAndServe()
 
-	if err != nil {
-		if err == http.ErrServerClosed {
-			log.Println("HTTP Server Shutted Down")
-		} else {
-			log.Fatal("HTTP Server Shutted Unexpected")
-		}
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatal("HTTP Server Starting failed: ", err)
 	}
 
+	log.Println("HTTP Server Shutted Down")
+
+ */
+	log.Println("HTTP Server starting ...")
+	go func() {
+		// 开启一个goroutine启动服务
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("HTTP Server starting failed: %s\n", err)
+		}
+	}()
+
+	// 等待中断信号来优雅地关闭服务器，为关闭服务器操作设置一个5秒的超时
+	quit := make(chan os.Signal, 1)
+	// kill 默认会发送 syscall.SIGTERM 信号
+	// kill -2 发送 syscall.SIGINT 信号，我们常用的Ctrl+C就是触发系统SIGINT信号
+	// kill -9 发送 syscall.SIGKILL 信号，但是不能被捕获，所以不需要添加它
+	// signal.Notify把收到的 syscall.SIGINT或syscall.SIGTERM 信号转发给quit
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("HTTP Server shutting down...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	// 5秒内优雅关闭服务（将未处理完的请求处理完再关闭服务），超过5秒就超时退出
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatal("HTTP Server shutdown: ", err)
+	}
+
+	log.Println("HTTP Server shutdown successfully")
 }
