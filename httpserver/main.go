@@ -111,27 +111,7 @@ func main() {
 		Addr:    ":8000",
 		Handler: handler,
 	}
-/*
-	// 创建系统信号接收器，捕捉并处理操作系统对进程产生的信号，以优雅地关闭服务器进程
-	done := make(chan os.Signal)
-	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		<-done
 
-		if err := server.Shutdown(context.Background()); err != nil {
-			log.Fatal("HTTP Server Shutdown: ", err)
-		}
-	}()
-
-	log.Println("HTTP Server Starting ...")
-
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatal("HTTP Server Starting failed: ", err)
-	}
-
-	log.Println("HTTP Server Shutted Down")
-
- */
 	log.Println("HTTP Server starting ...")
 	go func() {
 		// 开启一个goroutine启动服务
