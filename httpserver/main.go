@@ -64,7 +64,7 @@ type (
 
 	loggingResponseWriter struct {
 		http.ResponseWriter
-		responseData        *responseData
+		responseData *responseData
 	}
 )
 
@@ -81,17 +81,16 @@ func WithHTTPLogging(h http.Handler) http.Handler {
 		}
 		lw := loggingResponseWriter{
 			ResponseWriter: w,
-			responseData:   responseData,
+			responseData: responseData,
 		}
 		h.ServeHTTP(&lw, r)
 
 		logrus.WithFields(logrus.Fields{
-			"clientip":   getClientIP(r),
+			"clientip": getClientIP(r),
 			"uri":      r.RequestURI,
 			"method":   r.Method,
 			"status":   responseData.status,
 		}).Info()
-
 
 	})
 }
@@ -112,7 +111,7 @@ func main() {
 		Handler: handler,
 	}
 
-	log.Println("HTTP Server starting ...")
+	log.Println("HTTP Server starting...")
 	go func() {
 		// 开启一个goroutine启动服务
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -122,9 +121,7 @@ func main() {
 
 	// 等待中断信号来优雅地关闭服务器，为关闭服务器操作设置一个5秒的超时
 	quit := make(chan os.Signal, 1)
-	// kill 默认会发送 syscall.SIGTERM 信号
-	// kill -2 发送 syscall.SIGINT 信号，我们常用的Ctrl+C就是触发系统SIGINT信号
-	// kill -9 发送 syscall.SIGKILL 信号，但是不能被捕获，所以不需要添加它
+
 	// signal.Notify把收到的 syscall.SIGINT或syscall.SIGTERM 信号转发给quit
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
