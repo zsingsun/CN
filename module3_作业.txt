@@ -1,0 +1,106 @@
+# 1、httpserver容器化，构建本地镜像 
+root@node1:~/ws/golang/src/github.com/CN# docker build -t zsingsun/httpserver:v1.0 .
+Sending build context to Docker daemon  143.4kB
+Step 1/13 : FROM golang:alpine AS build
+ ---> d8bf44a3f6b4
+Step 2/13 : ENV GOPROXY=https://goproxy.cn,direct
+ ---> Running in 65d312586757
+Removing intermediate container 65d312586757
+ ---> be521781027a
+Step 3/13 : ENV GO111MODULE="on"
+ ---> Running in 98c78259a45b
+Removing intermediate container 98c78259a45b
+ ---> 59c98d8d0d90
+Step 4/13 : WORKDIR /app
+ ---> Running in 211ee70df93c
+Removing intermediate container 211ee70df93c
+ ---> 53bebfa68741
+Step 5/13 : COPY go.mod ./
+ ---> cbef3896b9f0
+Step 6/13 : COPY go.sum ./
+ ---> a79c2dd28a8c
+Step 7/13 : RUN go mod download
+ ---> Running in 37791579d016
+Removing intermediate container 37791579d016
+ ---> 906509857b83
+Step 8/13 : COPY httpserver/main.go ./
+ ---> 15d5809b796d
+Step 9/13 : RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o httpserver
+ ---> Running in 2d36b8a5790f
+Removing intermediate container 2d36b8a5790f
+ ---> 27133fdbfacc
+Step 10/13 : FROM scratch
+ ---> 
+Step 11/13 : ENV VERSION=1.0.0
+ ---> Running in 912de4bbfd16
+Removing intermediate container 912de4bbfd16
+ ---> 66de54edf7ac
+Step 12/13 : COPY --from=build /app/httpserver .
+ ---> 9eb7789383ef
+Step 13/13 : CMD ["./httpserver"]
+ ---> Running in 3dfbfa200d47
+Removing intermediate container 3dfbfa200d47
+ ---> 8265e7fd9018
+Successfully built 8265e7fd9018
+Successfully tagged zsingsun/httpserver:v1.0
+
+
+# 2、将镜像推送至docker官方镜像仓库
+root@node1:~/ws/golang/src/github.com/CN# docker login
+Login with your Docker ID to push and pull images from Docker Hub. If you don't have a Docker ID, head over to https://hub.docker.com to create one.
+Username: zsingsun
+Password: 
+WARNING! Your password will be stored unencrypted in /root/.docker/config.json.
+Configure a credential helper to remove this warning. See
+https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+
+Login Succeeded
+root@node1:~/ws/golang/src/github.com/CN# docker push zsingsun/httpserver:v1.0
+The push refers to repository [docker.io/zsingsun/httpserver]
+86e44fc37505: Pushed 
+v1.0: digest: sha256:77c96536251ca345180941bef53bf27a1cfd156d64337aca6926a20c25eeb08a size: 528
+
+
+# 3、通过 docker命令本地启动httpserver
+root@node1:~# docker run -d zsingsun/httpserver:v1.0
+Unable to find image 'zsingsun/httpserver:v1.0' locally
+v1.0: Pulling from zsingsun/httpserver
+53cdc4a9ec8e: Pull complete 
+Digest: sha256:77c96536251ca345180941bef53bf27a1cfd156d64337aca6926a20c25eeb08a
+Status: Downloaded newer image for zsingsun/httpserver:v1.0
+ff1e5b7eec847be444c43441422dafbc80916f4d33d1f50b8fb91e835ab22cb2
+
+
+# 4、通过nsenter进入容器查看IP配置
+root@node1:~/ws/golang/src/github.com/CN# docker ps |grep zsingsun
+ff1e5b7eec84   zsingsun/httpserver:v1.0                            "./httpserver"           About a minute ago   Up About a minute             heuristic_colden
+root@node1:~/ws/golang/src/github.com/CN# docker inspect --format "{{ .State.Pid}}" ff1e5b7eec84
+2147388
+root@node1:~/ws/golang/src/github.com/CN# nsenter -t 2147388 -n ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+36: eth0@if37: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default 
+    link/ether 02:42:ac:11:00:02 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet 172.17.0.2/16 brd 172.17.255.255 scope global eth0
+       valid_lft forever preferred_lft forever
+
+
+# 5、测试容器化后的应用
+root@node1:~/ws/golang/src/github.com/CN# curl -i http://172.17.0.2:8000/hello
+HTTP/1.1 200 OK
+Accept: */*
+User-Agent: curl/7.68.0
+Version: 1.0.0
+Date: Wed, 12 Jan 2022 14:31:04 GMT
+Content-Length: 6
+Content-Type: text/plain; charset=utf-8
+
+Hello!root@node1:~/ws/golang/src/github.com/CN# curl -i http://172.17.0.2:8000/healthz
+HTTP/1.1 200 OK
+Date: Wed, 12 Jan 2022 14:31:11 GMT
+Content-Length: 3
+Content-Type: text/plain; charset=utf-8
+
+200root@node1:~/ws/golang/src/github.com/CN# 
