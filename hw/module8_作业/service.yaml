@@ -10,4 +10,4 @@ spec:
       name: http
       targetport: 8000
   selector:
-    app: nginx
+    app: http
