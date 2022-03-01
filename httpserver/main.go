@@ -1,6 +1,6 @@
 package main
 
-import "CN/cmd"
+import "github.com/CN/httpserver/cmd"
 
 func main() {
 	cmd.Execute()

@@ -1,13 +1,8 @@
 package cmd
 
 import (
-	"CN/config"
 	"context"
 	"fmt"
-	"github.com/spf13/cobra"
-//	"github.com/spf13/cobra/cobra/cmd"
-
-
 	"log"
 	"net/http"
 	"os"
@@ -18,7 +13,10 @@ import (
 
 //	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"github.com/spf13/cobra"
 	"github.com/sirupsen/logrus"
+
+	"github.com/CN/httpserver/config"
 )
 
 
