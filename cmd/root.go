@@ -1,12 +1,13 @@
 package cmd
 
 import (
+	"CN/config"
 	"context"
 	"fmt"
 	"github.com/spf13/cobra"
-	"github.com/spf13/cobra/cobra/cmd"
+//	"github.com/spf13/cobra/cobra/cmd"
 
-	//	"github.com/spf13/cobra/cobra/cmd"
+
 	"log"
 	"net/http"
 	"os"
@@ -15,20 +16,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/spf13/pflag"
+//	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/sirupsen/logrus"
 )
 
-var rootCmd = &cobra.Command{
-	Use:   "server",
-	Short: "server is a simple restful api server",
-	Long: `server is a simple restful api server
-    use help get more ifo`,
-	Run: func(cmd *cobra.Command, args []string) {
-		runServer()
-	},
-}
 
 type helloHandler struct{}
 
@@ -120,7 +112,7 @@ func runServer() {
 	mux.Handle("/hello", &helloHandler{})
 	mux.Handle("/healthz", &healthzHandler{})
 
-	addr := viper.GetString("addr")
+	addr := viper.GetString("server.addr")
 	log.Printf("HTTP Server listening on %s", addr)
 
 	server := &http.Server{
@@ -154,27 +146,14 @@ func runServer() {
 	log.Println("HTTP Server shutdown successfully")
 }
 
-type Config struct {
-	Name string
-}
-
-// 读取配置
-func (c *Config) InitConfig() error {
-	if c.Name != "" {
-		viper.SetConfigFile(c.Name)
-	} else {
-		viper.AddConfigPath("config")
-		viper.SetConfigName("server.conf")
-		log.Println("checking default config..")
-	}
-	viper.SetConfigType("yaml")
-
-	// 从环境变量总读取
-	viper.AutomaticEnv()
-	viper.SetEnvPrefix("web")
-	viper.SetEnvKeyReplacer(strings.NewReplacer("_", "."))
-
-	return viper.ReadInConfig()
+//
+var rootCmd = &cobra.Command{
+	Use:   "httpserver",
+	Short: "httpserver is a simple restful api server",
+	Long: `httpserver is a simple restful api server, use help get more info`,
+	Run: func(cmd *cobra.Command, args []string) {
+		runServer()
+	},
 }
 
 var cfgFile string
@@ -182,7 +161,8 @@ var cfgFile string
 // 初始化, 设置 flag 等
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default: ./conf/config.yaml)")
+	//rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default: ./conf/default.conf)")
+	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c","", "config file (default: ./conf/default.conf)")
 }
 
 // 初始化配置
@@ -194,7 +174,7 @@ func initConfig() {
 	if err := c.InitConfig(); err != nil {
 		panic(err)
 	}
-	log.Printf("载入配置成功")
+	log.Printf("config file loaded successful.")
 	//c.WatchConfig(configChange)
 }
 
