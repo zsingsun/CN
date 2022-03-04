@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: httpserver
+  name: httpserver-https
   annotations:
     kubernetes.io/ingress.class: "nginx"
 spec:
@@ -10,10 +10,10 @@ spec:
         - cncamp.example.io
       secretName: cncamp-tls
   rules:
-    - host: cncamp.com
+    - host: cncamp.example.io
       http:
         paths:
-          - path: "/"
+          - path: "/healthz"
             pathType: Prefix
             backend:
               service:
