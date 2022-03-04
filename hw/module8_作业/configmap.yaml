@@ -8,5 +8,5 @@ data:
       addr: :8081
     log:
       use_json: true
-      logger_level: debug
+      logger_level: info
       logger_file: log/server.log
