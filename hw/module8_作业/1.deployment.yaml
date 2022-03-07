@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpserver
+spec:
+  selector:
+    matchLabels:
+      app: httpserver
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: httpserver
+    spec:
+      containers:
+        - name: httpserver
+          image: zsingsun/httpserver:v1.2
+          resources:
+            limits:
+              memory: 1Gi
+              cpu: 1
+            requests:
+              memory: 256Mi
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/conf
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 10
+            periodSeconds: 60
+            successThreshold: 1
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  [
+                    "/bin/sh",
+                    "-c", 
+                    "echo Hello from the preStop handler. > /tmp/stop.log && sleep 10s",
+                  ]
+      volumes:
+        - name: config-volume
+          configMap:
+            name: httpserver-config
