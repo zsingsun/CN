@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,12 +12,15 @@ import (
 	"syscall"
 	"time"
 
-//	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/spf13/cobra"
-	"github.com/sirupsen/logrus"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/CN/httpserver/config"
+	"github.com/CN/httpserver/middleware"
 )
 
 
@@ -36,79 +40,42 @@ func (*helloHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 type healthzHandler struct{}
 
 func (*healthzHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// 添加0-2s 随机时延，并计算时延
+
+	timeStart := time.Now()
+	defer func() {
+		//lantency := time.Since(timeStart)
+		//log.Println(lantency)
+		http_request_duration_seconds.Observe(time.Since(timeStart).Seconds())
+	}()
+
+	delay := rand.Intn(2000)
+	time.Sleep(time.Millisecond*time.Duration(delay))
+
 	// 当访问/healthz时，应返回200
 	fmt.Fprintf(w, "200")
 }
 
-// 处理Request.RemoteAddress，只保留ip地址，比如: "[::1]:58292" => "[::1]"
-func ipAddrWithoutPort(s string) string {
-	idx := strings.LastIndex(s, ":")
-	if idx == -1 {
-		return s
-	}
-	return s[:idx]
-}
-
-// 获取客户端真实IP
-func getClientIP(r *http.Request) string {
-	IPAddr := r.Header.Get("X-Real-Ip")
-	if IPAddr =="" {
-		IPAddr = r.Header.Get("X-Forwarded-For")
-	}
-	if IPAddr =="" {
-		IPAddr = r.RemoteAddr
-	}
-	return ipAddrWithoutPort(IPAddr)
-}
-
-type (
-	responseData struct {
-		status int
-	}
-
-	loggingResponseWriter struct {
-		http.ResponseWriter
-		responseData *responseData
-	}
+var (
+	http_request_duration_seconds = promauto.NewHistogram(
+        prometheus.HistogramOpts{
+            Name:		"http_request_duration_seconds",
+            Help:		"Histogram of lantencies for HTTP requests",
+         // Buckets:	[]float64{.1, .2, .4, 1, 3, 8, 20, 60, 120},
+        },
+    )
 )
-
-// WriteHeader: 获取response中的statuscode
-func (r *loggingResponseWriter) WriteHeader(statusCode int) {
-	r.ResponseWriter.WriteHeader(statusCode)
-	r.responseData.status = statusCode
-}
-
-// WithHTTPLogging: 记录客户端访问日志，包括客户端IP，响应状态码等
-func WithHTTPLogging(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		responseData := &responseData{
-			status: http.StatusOK,
-		}
-		lw := loggingResponseWriter{
-			ResponseWriter: w,
-			responseData: responseData,
-		}
-		h.ServeHTTP(&lw, r)
-
-		logrus.WithFields(logrus.Fields{
-			"clientIP": getClientIP(r),
-			"uri":      r.RequestURI,
-			"method":   r.Method,
-			"status":   responseData.status,
-		}).Info()
-
-	})
-}
-
 
 func runServer() {
 	mux := http.NewServeMux()
 
 	var handler http.Handler = mux
-	handler = WithHTTPLogging(handler)
+	handler = middleware.WithHTTPLogging(handler)
 
 	mux.Handle("/hello", &helloHandler{})
 	mux.Handle("/healthz", &healthzHandler{})
+
+	mux.Handle("/metrics", promhttp.Handler())
 
 	addr := viper.GetString("server.addr")
 	log.Printf("HTTP Server listening on %s", addr)
