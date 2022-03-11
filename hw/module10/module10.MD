@@ -60,5 +60,5 @@ template:
 
 ### Grafana 页面展现延时分布情况
 
-![image](https://raw.githubusercontent.com/zsingsun/CN/edit/master/hw/module10/grafana.JPG)
+![image](https://github.com/zsingsun/CN/blob/master/hw/module10/grafana.JPG)
 
