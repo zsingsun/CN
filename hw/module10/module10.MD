@@ -53,3 +53,9 @@ template:
 ...
 ```
 
+### Prometheus
+![image](https://github.com/zsingsun/CN/edit/master/hw/module10/prometheus.JPG)
+
+### Grafana
+![image](https://github.com/zsingsun/CN/edit/master/hw/module10/grafana.JPG)
+
