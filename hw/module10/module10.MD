@@ -31,7 +31,7 @@ var (
 	mux.Handle("/metrics", promhttp.Handler())
 ```
 
-### 部署lokistack
+### 部署loki-stack
 ```sh
 helm repo add grafana https://grafana.github.io/helm-charts
 
