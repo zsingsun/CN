@@ -53,14 +53,12 @@ template:
 ...
 ```
 
-### Prometheus
+### Prometheus页面查询延时指标数据
+
 ![image](https://raw.githubusercontent.com/zsingsun/CN/master/hw/module10/prometheus.JPG)
 
-<p align='center'>
-<img src='prometheus.JPG' title='images' style='max-width:600px' referrerpolicy="no-referrer"></img>
-</p>
 
+### Grafana 页面展现延时分布情况
 
-### Grafana
-![image](https://github.com/zsingsun/CN/edit/master/hw/module10/grafana.JPG)
+![image](https://raw.githubusercontent.com/zsingsun/CN/edit/master/hw/module10/grafana.JPG)
 
