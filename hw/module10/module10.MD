@@ -54,7 +54,7 @@ template:
 ```
 
 ### Prometheus
-![image](https://github.com/zsingsun/CN/edit/master/hw/module10/prometheus.JPG)
+![image](https://raw.githubusercontent.com/zsingsun/CN/master/hw/module10/prometheus.JPG)
 
 <p align='center'>
 <img src='prometheus.JPG' title='images' style='max-width:600px' referrerpolicy="no-referrer"></img>
