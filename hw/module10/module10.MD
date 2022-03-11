@@ -55,11 +55,11 @@ template:
 
 ### Prometheus
 ![image](https://github.com/zsingsun/CN/edit/master/hw/module10/prometheus.JPG)
-```html
+
 <p align='center'>
-<img src='prometheus.JPG' title='images' style='max-width:600px'></img>
+<img src='prometheus.JPG' title='images' style='max-width:600px' referrerpolicy="no-referrer"></img>
 </p>
-```
+
 
 ### Grafana
 ![image](https://github.com/zsingsun/CN/edit/master/hw/module10/grafana.JPG)
