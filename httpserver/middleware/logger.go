@@ -35,6 +35,8 @@ func WithHTTPLogging(h http.Handler) http.Handler {
 		}
 		h.ServeHTTP(&lw, r)
 
+		logrus.SetFormatter(&logrus.JSONFormatter{})
+
 		logrus.WithFields(logrus.Fields{
 			"clientIP": getClientIP(r),
 			"uri":      r.RequestURI,
