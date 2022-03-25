@@ -11,6 +11,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"io"
 
 	"github.com/spf13/viper"
 	"github.com/spf13/cobra"
@@ -47,11 +48,16 @@ func (*healthzHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http_request_duration_seconds.Observe(time.Since(timeStart).Seconds())
 	}()
 
-	delay := rand.Intn(2000)
+	delay := rand.Intn(200)
 	time.Sleep(time.Millisecond*time.Duration(delay))
 
 	// 当访问/healthz时，应返回200
-	fmt.Fprintf(w, "200")
+	//fmt.Fprintf(w, "200")
+	for k, v := range r.Header {
+		io.WriteString(w, fmt.Sprintf("%s=%s\n", k, v))
+	}
+
+	io.WriteString(w, "ok\n")
 }
 
 var (
@@ -59,7 +65,7 @@ var (
         prometheus.HistogramOpts{
             Name:		"http_request_duration_seconds",
             Help:		"Histogram of lantencies for HTTP requests",
-			Buckets:	[]float64{.1, .2, .4, 1, 3, 8, 20, 60, 120},
+			//Buckets:	[]float64{.1, .2, .4, 1, 3, 8, 20, 60, 120},
         },
     )
 )
