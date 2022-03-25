@@ -70,7 +70,7 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	delay := randInt(10,20)
 	time.Sleep(time.Millisecond*time.Duration(delay))
 	io.WriteString(w, "===================Details of the http request header:============\n")
-	req, err := http.NewRequest("GET", "http://service2", nil)
+	req, err := http.NewRequest("GET", "http://service2/healthz", nil)
 	if err != nil {
 		fmt.Printf("%s", err)
 	}
