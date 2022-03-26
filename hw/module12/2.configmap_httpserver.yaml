@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: httpserver-config
+data:
+  server.conf: |
+    server:
+      addr: :8081
+    log:
+      use_json: true
+      logger_level: info
+      logger_file: log/server.log
