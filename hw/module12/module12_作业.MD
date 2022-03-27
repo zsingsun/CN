@@ -168,4 +168,4 @@ for i in `seq 100`; do curl --resolve httpsserver.cncamp.example.io:443:172.16.1
 istioctl dashboard jaeger
 ```
 
-![image](https://raw.githubusercontent.com/zsingsun/CN/master/hw/module10/prometheus.JPG)
+![image](https://github.com/zsingsun/CN/blob/master/hw/module12/jaeger_httpserver.jpg)
