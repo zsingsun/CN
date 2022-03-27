@@ -9,9 +9,9 @@ kubectl create -n istio-system secret tls cncamp-credential --key=tls.key --cert
 ```sh
 kubectl create ns tracing
 kubectl label ns tracing istio-injection=enabled
-kubectl -n tracing apply -f service0.yaml
-kubectl -n tracing apply -f service1.yaml
-kubectl -n tracing apply -f service2.yaml
+kubectl -n tracing apply -f 0.deployment_svc_s0.yaml
+kubectl -n tracing apply -f 1.deployment_svc_s1.yaml
+kubectl -n tracing apply -f 2.deployment_svc_httpserver.yaml
 ```
 
 ### istio配置 /service0 和 /nginx 路由及https
@@ -168,4 +168,4 @@ for i in `seq 100`; do curl --resolve httpsserver.cncamp.example.io:443:172.16.1
 istioctl dashboard jaeger
 ```
 
-![image](https://raw.githubusercontent.com/zsingsun/CN/master/hw/module10/prometheus.JPG)
+![image](https://github.com/zsingsun/CN/blob/master/hw/module12/jaeger_httpserver.jpg)
